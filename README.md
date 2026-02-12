@@ -9,6 +9,8 @@
 
 An AI-powered web series recommendation website with a stunning 80s retro sci-fi neon aesthetic inspired by Stranger Things. Built with Next.js 14, TypeScript, TensorFlow.js, and MongoDB.
 
+🌐 Live Website: https://cineverseai.vercel.app/
+
 ## ✨ Features
 
 ### 🎨 Design
