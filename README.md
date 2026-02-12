@@ -1,5 +1,7 @@
 # CineVerse - AI-Powered Web Series Recommendation Platform
 
+![CineVerse Preview](./CineVerse_preview.png)
+
 ![CineVerse](https://img.shields.io/badge/CineVerse-v1.0.0-ff0055?style=for-the-badge)
 ![Next.js](https://img.shields.io/badge/Next.js-14-00d9ff?style=for-the-badge)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge)
