@@ -1,0 +1,286 @@
+/* app/globals.css */
+/* Global styles with 80s retro sci-fi neon aesthetic inspired by Stranger Things */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-neon-red: #ff0055;
+  --color-neon-blue: #00d9ff;
+  --color-neon-pink: #ff006e;
+  --color-neon-purple: #8b00ff;
+  --color-dark-bg: #0a0a0a;
+  --color-dark-secondary: #1a0a14;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply font-body bg-black text-white overflow-x-hidden;
+  background: linear-gradient(180deg, #0a0a0a 0%, #1a0505 50%, #0a0a0a 100%);
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Animated fog effect */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 0, 85, 0.03) 0%,
+    transparent 50%
+  );
+  animation: fog 20s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(0deg, rgba(255, 0, 85, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 0, 85, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+  border-left: 1px solid rgba(255, 0, 85, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--color-neon-red), var(--color-neon-blue));
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--color-neon-pink), var(--color-neon-purple));
+}
+
+/* Text glow effect */
+.text-glow {
+  text-shadow: 
+    0 0 10px currentColor,
+    0 0 20px currentColor,
+    0 0 30px currentColor;
+}
+
+.text-glow-red {
+  color: var(--color-neon-red);
+  text-shadow: 
+    0 0 10px var(--color-neon-red),
+    0 0 20px var(--color-neon-red),
+    0 0 40px var(--color-neon-red);
+}
+
+.text-glow-blue {
+  color: var(--color-neon-blue);
+  text-shadow: 
+    0 0 10px var(--color-neon-blue),
+    0 0 20px var(--color-neon-blue),
+    0 0 40px var(--color-neon-blue);
+}
+
+/* Glassmorphism cards */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 0, 85, 0.2);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 0, 85, 0.5);
+  box-shadow: 
+    0 0 20px rgba(255, 0, 85, 0.3),
+    0 0 40px rgba(0, 217, 255, 0.2);
+  transform: translateY(-5px);
+}
+
+/* Neon button styles */
+.neon-button {
+  @apply px-6 py-3 rounded-lg font-display font-bold uppercase tracking-wider;
+  background: transparent;
+  border: 2px solid var(--color-neon-red);
+  color: var(--color-neon-red);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.neon-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 0, 85, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.neon-button:hover::before {
+  left: 100%;
+}
+
+.neon-button:hover {
+  background: rgba(255, 0, 85, 0.1);
+  box-shadow: 
+    0 0 20px rgba(255, 0, 85, 0.5),
+    inset 0 0 20px rgba(255, 0, 85, 0.2);
+  transform: translateY(-2px);
+}
+
+.neon-button-blue {
+  border-color: var(--color-neon-blue);
+  color: var(--color-neon-blue);
+}
+
+.neon-button-blue:hover {
+  background: rgba(0, 217, 255, 0.1);
+  box-shadow: 
+    0 0 20px rgba(0, 217, 255, 0.5),
+    inset 0 0 20px rgba(0, 217, 255, 0.2);
+}
+
+/* Loading skeleton animation */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 0, 85, 0.1) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Particle effect container */
+.particles-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Custom animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 0, 85, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 0, 85, 0.8), 0 0 60px rgba(0, 217, 255, 0.4);
+  }
+}
+
+@keyframes fog {
+  0%, 100% {
+    transform: translateX(0) translateY(0);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateX(100px) translateY(-50px);
+    opacity: 0.5;
+  }
+}
+
+/* Page transition */
+.page-transition {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive design utilities */
+@media (max-width: 768px) {
+  .glass-card {
+    border-radius: 12px;
+  }
+  
+  .neon-button {
+    @apply px-4 py-2 text-sm;
+  }
+}
+
+/* Selection styling */
+::selection {
+  background: rgba(255, 0, 85, 0.3);
+  color: white;
+}
+
+::-moz-selection {
+  background: rgba(255, 0, 85, 0.3);
+  color: white;
+}
+
+/* Focus styles */
+*:focus {
+  outline: 2px solid var(--color-neon-red);
+  outline-offset: 2px;
+}
+
+button:focus,
+a:focus {
+  outline-offset: 4px;
+}
