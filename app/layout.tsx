@@ -7,9 +7,12 @@ import ParticlesBackground from '@/components/ParticlesBackground';
 import AudioToggle from '@/components/AudioToggle';
 
 export const metadata: Metadata = {
-  title: 'CineVerse - Enter the Algorithmic Upside Down',
+  title: 'CineVerse',
   description: 'AI-powered web series recommendations with retro sci-fi aesthetics',
   keywords: ['web series', 'TV shows', 'recommendations', 'AI', 'streaming'],
+  icons: {
+    icon: '/favicon.png',
+  },
 };
 
 export default function RootLayout({
