@@ -1,4 +1,4 @@
-# CineVerse - AI-Powered Web Series Recommendation Platform
+# CineVerse - AI-Powered Web Series Recommendation Platform 🧿🫶
 
 ![CineVerse Preview](./CineVerse_preview.png)
 
