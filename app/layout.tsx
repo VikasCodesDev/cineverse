@@ -5,6 +5,7 @@ import './globals.css';
 import Navigation from '@/components/Navigation';
 import ParticlesBackground from '@/components/ParticlesBackground';
 import AudioToggle from '@/components/AudioToggle';
+import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: 'CineVerse',
@@ -40,6 +41,7 @@ export default function RootLayout({
         
         {/* Audio toggle */}
         <AudioToggle />
+        <Footer />
       </body>
     </html>
   );
