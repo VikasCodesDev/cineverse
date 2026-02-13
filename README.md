@@ -6,6 +6,7 @@
 ![Next.js](https://img.shields.io/badge/Next.js-14-00d9ff?style=for-the-badge)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge)
 ![TensorFlow.js](https://img.shields.io/badge/TensorFlow.js-4-orange?style=for-the-badge)
+![Three.js](https://img.shields.io/badge/Three.js-4-violet?style=for-the-badge)
 
 An AI-powered web series recommendation website with a stunning 80s retro sci-fi neon aesthetic inspired by Stranger Things. Built with Next.js 14, TypeScript, TensorFlow.js, and MongoDB.
 
