@@ -22,37 +22,51 @@ export default function SeriesDetailPage({ params }: { params: { id: string } })
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const id = params.id;
+    const fetchSeriesDetails = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(
+          `https://api.themoviedb.org/3/tv/${id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&append_to_response=credits,videos,keywords`
+        );
+        const data = await res.json();
+        setSeries(data);
+      } catch {
+        // ignore
+      } finally {
+        setLoading(false);
+      }
+    };
+    const fetchRecommendations = async () => {
+      try {
+        const res = await fetch(`/api/recommendations?type=similar&seriesId=${id}`);
+        const data = await res.json();
+        if (data.success) setRecommendations(data.data);
+      } catch {
+        // ignore
+      }
+    };
     fetchSeriesDetails();
     fetchRecommendations();
-    // Add to watch history
-    try {
-      const hist = JSON.parse(localStorage.getItem('cv_watch_history') || '[]');
-      if (!hist.includes(parseInt(params.id))) {
-        hist.unshift(parseInt(params.id));
-        localStorage.setItem('cv_watch_history', JSON.stringify(hist.slice(0, 50)));
+    const numId = parseInt(id, 10);
+    if (!Number.isNaN(numId)) {
+      fetch('/api/user/recent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ seriesId: numId }),
+      }).catch(() => {});
+      try {
+        const hist = JSON.parse(localStorage.getItem('cv_watch_history') || '[]');
+        if (!hist.includes(numId)) {
+          hist.unshift(numId);
+          localStorage.setItem('cv_watch_history', JSON.stringify(hist.slice(0, 50)));
+        }
+      } catch {
+        // ignore
       }
-    } catch {}
+    }
   }, [params.id]);
-
-  const fetchSeriesDetails = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `https://api.themoviedb.org/3/tv/${params.id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&append_to_response=credits,videos,keywords`
-      );
-      const data = await res.json();
-      setSeries(data);
-    } catch {}
-    setLoading(false);
-  };
-
-  const fetchRecommendations = async () => {
-    try {
-      const res = await fetch(`/api/recommendations?type=similar&seriesId=${params.id}`);
-      const data = await res.json();
-      if (data.success) setRecommendations(data.data);
-    } catch {}
-  };
 
   if (loading) return <div className="min-h-screen pt-24 pb-12 px-4"><div className="max-w-7xl mx-auto"><DetailsSkeleton /></div></div>;
   if (!series) return (
@@ -82,7 +96,7 @@ export default function SeriesDetailPage({ params }: { params: { id: string } })
           <div className="max-w-7xl mx-auto w-full">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
               <h1 className="text-4xl md:text-6xl font-display font-black text-glow-red">{series.name}</h1>
-              {series.tagline && <p className="text-xl md:text-2xl text-neon-blue font-body italic">"{series.tagline}"</p>}
+              {series.tagline && <p className="text-xl md:text-2xl text-neon-blue font-body italic">&quot;{series.tagline}&quot;</p>}
               <div className="flex flex-wrap items-center gap-4 text-sm md:text-base">
                 <div className="flex items-center space-x-2 glass-card px-3 py-1">
                   <svg className="w-5 h-5 text-neon-red" fill="currentColor" viewBox="0 0 20 20">

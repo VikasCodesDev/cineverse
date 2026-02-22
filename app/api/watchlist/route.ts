@@ -1,27 +1,32 @@
 // app/api/watchlist/route.ts
-// Watchlist management API (uses MongoDB for persistence)
+// Watchlist management API (uses MongoDB for persistence, requires auth for write)
 import { NextRequest, NextResponse } from 'next/server';
+import { getCollection } from '@/lib/mongodb';
+import { verifyToken, getCookieName } from '@/lib/jwt';
+import { WatchlistStatus } from '@/types';
 
 export const dynamic = 'force-dynamic';
-import { getCollection } from '@/lib/mongodb';
-import { WatchlistEntry, WatchlistStatus } from '@/types';
 
-function getUserId(request: NextRequest): string {
-  // Simple session-based user identification using cookies
-  const userId = request.cookies.get('cv_user_id')?.value;
-  return userId || 'anonymous';
+async function getUserId(request: NextRequest): Promise<string | null> {
+  const token = request.cookies.get(getCookieName())?.value;
+  if (token) {
+    const payload = await verifyToken(token);
+    if (payload) return payload.userId;
+  }
+  const fallback = request.cookies.get('cv_user_id')?.value;
+  return fallback || null;
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = getUserId(request);
+    const userId = await getUserId(request);
+    if (!userId) {
+      return NextResponse.json({ success: true, data: [] });
+    }
     const collection = await getCollection('watchlist');
     const entries = await collection.find({ userId }).toArray();
-    
-    return NextResponse.json({
-      success: true,
-      data: entries.map(({ _id, userId: uid, ...rest }) => rest),
-    });
+    const data = entries.map(({ _id, userId: _uid, ...rest }) => rest);
+    return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error('Watchlist GET error:', error);
     return NextResponse.json({ success: false, error: 'Failed to fetch watchlist' }, { status: 500 });
@@ -30,9 +35,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = getUserId(request);
-    const body = await request.json();
+    const userId = await getUserId(request);
+    if (!userId) {
+      return NextResponse.json({ success: false, error: 'Please log in to manage your watchlist' }, { status: 401 });
+    }
+    const body = await request.json().catch(() => ({}));
     const { action, seriesId, status, progress, seriesName, posterPath, rating, notes } = body;
+
+    if (action !== 'remove' && (typeof seriesId !== 'number' || !seriesId)) {
+      return NextResponse.json({ success: false, error: 'Invalid series' }, { status: 400 });
+    }
 
     const collection = await getCollection('watchlist');
 

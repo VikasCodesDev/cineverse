@@ -9,43 +9,64 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 
+// TMDB genre IDs (tv): Action=10759, Comedy=35, Drama=18, Sci-Fi=10765, Mystery=9648, etc.
 const MOOD_TO_GENRES: Record<string, number[]> = {
-  exciting: [28, 10759, 80],
-  relaxing: [35, 10751, 10402],
-  mysterious: [9648, 18, 10765],
-  funny: [35, 10751],
-  dramatic: [18, 10768, 80],
+  exciting: [10759, 10765, 80],      // Action/Adventure, Sci-Fi, Crime
+  relaxing: [35, 10751, 99],        // Comedy, Family, Documentary
+  mysterious: [9648, 18, 10765],    // Mystery, Drama, Sci-Fi
+  funny: [35, 10751, 16],           // Comedy, Family, Animation
+  dramatic: [18, 10768, 80],        // Drama, War, Crime
+};
+
+const MOOD_KEYWORDS: Record<string, string> = {
+  exciting: 'action thriller',
+  relaxing: 'comedy light',
+  mysterious: 'mystery thriller',
+  funny: 'comedy',
+  dramatic: 'drama',
 };
 
 export async function POST(request: NextRequest) {
   try {
-    const { availableTime, mood, genreId } = await request.json();
+    const body = await request.json().catch(() => ({}));
+    const availableTime = typeof body.availableTime === 'number' ? body.availableTime : 60;
+    const mood = typeof body.mood === 'string' ? body.mood.toLowerCase() : 'exciting';
+    const genreId = body.genreId;
 
-    // Fetch series based on mood/genre
-    const genreIds = genreId ? [genreId] : MOOD_TO_GENRES[mood] || [18];
-    
+    const genreIds = genreId ? [Number(genreId)] : MOOD_TO_GENRES[mood] || MOOD_TO_GENRES.exciting;
+    const apiKey = TMDB_API_KEY || '';
+
     const params = new URLSearchParams({
-      api_key: TMDB_API_KEY || '',
+      api_key: apiKey,
       with_genres: genreIds.join(','),
       sort_by: 'vote_average.desc',
-      'vote_count.gte': '200',
+      'vote_count.gte': '50',
       page: '1',
     });
 
     const tmdbRes = await fetch(`${TMDB_BASE}/discover/tv?${params}`);
-    const tmdbData = await tmdbRes.json();
-    const candidates = (tmdbData.results || []).slice(0, 12);
+    const tmdbData = await tmdbRes.json().catch(() => ({ results: [] }));
+    let candidates = (tmdbData.results || []).slice(0, 12);
 
-    if (!GROQ_API_KEY || candidates.length === 0) {
-      // Fallback without AI
-      const picks = candidates.slice(0, 3).map((s: any) => ({
-        ...s,
-        suggestion: `A great ${mood} pick for your available time.`,
-        episodeRecommendation: availableTime < 60 
-          ? 'Watch 1 episode to get started' 
-          : `Watch ${Math.floor(availableTime / 45)} episodes`,
-      }));
-      return NextResponse.json({ success: true, data: picks });
+    if (candidates.length === 0 && apiKey) {
+      const kw = MOOD_KEYWORDS[mood] || 'drama';
+      const searchRes = await fetch(`${TMDB_BASE}/search/tv?api_key=${apiKey}&query=${encodeURIComponent(kw)}&page=1`);
+      const searchData = await searchRes.json().catch(() => ({ results: [] }));
+      candidates = (searchData.results || []).slice(0, 12);
+    }
+
+    const episodeCount = Math.max(1, Math.floor(availableTime / 45));
+    const defaultPicks = candidates.slice(0, 5).map((s: { id: number; name: string; vote_average?: number; overview?: string }) => ({
+      ...s,
+      suggestion: `A great ${mood} pick for your available time.`,
+      episodeRecommendation: availableTime < 60 ? 'Watch 1 episode to get started' : `Watch ${episodeCount} episode(s)`,
+    }));
+
+    if (candidates.length === 0) {
+      return NextResponse.json({ success: true, data: [] });
+    }
+    if (!GROQ_API_KEY) {
+      return NextResponse.json({ success: true, data: defaultPicks.slice(0, 3) });
     }
 
     // Use Groq to pick the best options
@@ -90,11 +111,7 @@ Pick 3 best shows with suggestions.`
         return { ...series, suggestion: p.suggestion, episodeRecommendation: p.episodeRecommendation };
       }).filter(Boolean);
     } catch {
-      picks = candidates.slice(0, 3).map((s: any) => ({
-        ...s,
-        suggestion: `Perfect for a ${mood} ${availableTime}-minute session.`,
-        episodeRecommendation: `Watch ${Math.max(1, Math.floor(availableTime / 45))} episode(s)`,
-      }));
+      picks = defaultPicks.slice(0, 3);
     }
 
     return NextResponse.json({ success: true, data: picks });

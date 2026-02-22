@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getPosterUrl, Series } from '@/lib/tmdb';
+import { getPosterUrl } from '@/lib/tmdb';
 
 interface SeriesDNAProps {
   seriesId: number;
@@ -26,59 +26,56 @@ interface SimilarShow {
 export default function SeriesDNA({ seriesId, seriesName, genres }: SeriesDNAProps) {
   const [similar, setSimilar] = useState<SimilarShow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [fetched, setFetched] = useState(false);
-
-  const fetchSimilar = async () => {
-    if (fetched) return;
-    setLoading(true);
-    setFetched(true);
-    
-    try {
-      const TMDB_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
-      const [simRes, recRes] = await Promise.all([
-        fetch(`https://api.themoviedb.org/3/tv/${seriesId}/similar?api_key=${TMDB_KEY}&page=1`),
-        fetch(`https://api.themoviedb.org/3/tv/${seriesId}/recommendations?api_key=${TMDB_KEY}&page=1`),
-      ]);
-      
-      const simData = await simRes.json();
-      const recData = await recRes.json();
-      
-      const allShows = new Map<number, any>();
-      for (const s of [...(simData.results || []), ...(recData.results || [])]) {
-        if (!allShows.has(s.id)) allShows.set(s.id, s);
-      }
-
-      // Calculate pseudo-similarity based on shared genres
-      const currentGenres = new Set(genres || []);
-      const ranked = Array.from(allShows.values())
-        .map(s => {
-          const sharedGenres = (s.genre_ids || []).filter((g: number) => currentGenres.has(g)).length;
-          const totalGenres = Math.max(currentGenres.size, (s.genre_ids || []).length, 1);
-          const genreSimilarity = sharedGenres / totalGenres;
-          const ratingBonus = (s.vote_average || 0) / 10 * 0.2;
-          const similarity = Math.min(99, Math.round((genreSimilarity * 0.8 + ratingBonus) * 100));
-
-          const matchReasons: string[] = [];
-          if (sharedGenres > 0) matchReasons.push(`${sharedGenres} shared genre${sharedGenres > 1 ? 's' : ''}`);
-          if (s.vote_average > 7.5) matchReasons.push('Highly rated');
-          if (s.popularity > 50) matchReasons.push('Popular');
-
-          return { ...s, similarity: similarity || Math.floor(Math.random() * 30 + 60), matchReasons };
-        })
-        .sort((a, b) => b.similarity - a.similarity)
-        .slice(0, 6);
-
-      setSimilar(ranked);
-    } catch {
-      setSimilar([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    fetchSimilar();
-  }, [seriesId]);
+    let cancelled = false;
+    const currentGenres = new Set(genres || []);
+    setLoading(true);
+    const TMDB_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+    Promise.all([
+      fetch(`https://api.themoviedb.org/3/tv/${seriesId}/similar?api_key=${TMDB_KEY}&page=1`),
+      fetch(`https://api.themoviedb.org/3/tv/${seriesId}/recommendations?api_key=${TMDB_KEY}&page=1`),
+    ])
+      .then(([simRes, recRes]) => Promise.all([simRes.json(), recRes.json()]))
+      .then(([simData, recData]) => {
+        if (cancelled) return;
+        const allShows = new Map<number, Record<string, unknown>>();
+        for (const s of [...(simData.results || []), ...(recData.results || [])]) {
+          if (!allShows.has(s.id)) allShows.set(s.id, s);
+        }
+        const ranked = Array.from(allShows.values())
+          .map((s: Record<string, unknown>) => {
+            const genreIds = (s.genre_ids || []) as number[];
+            const sharedGenres = genreIds.filter((g: number) => currentGenres.has(g)).length;
+            const totalGenres = Math.max(currentGenres.size, genreIds.length, 1);
+            const genreSimilarity = sharedGenres / totalGenres;
+            const ratingBonus = ((s.vote_average as number) || 0) / 10 * 0.2;
+            const similarity = Math.min(99, Math.round((genreSimilarity * 0.8 + ratingBonus) * 100));
+            const matchReasons: string[] = [];
+            if (sharedGenres > 0) matchReasons.push(`${sharedGenres} shared genre${sharedGenres > 1 ? 's' : ''}`);
+            if ((s.vote_average as number) > 7.5) matchReasons.push('Highly rated');
+            if ((s.popularity as number) > 50) matchReasons.push('Popular');
+            return {
+              id: s.id as number,
+              name: (s.name as string) || '',
+              poster_path: (s.poster_path as string | null) ?? null,
+              vote_average: (s.vote_average as number) ?? 0,
+              similarity: similarity || Math.floor(Math.random() * 30 + 60),
+              matchReasons,
+            };
+          })
+          .sort((a, b) => b.similarity - a.similarity)
+          .slice(0, 6);
+        setSimilar(ranked);
+      })
+      .catch(() => {
+        if (!cancelled) setSimilar([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [seriesId, genres]);
 
   if (loading) {
     return (

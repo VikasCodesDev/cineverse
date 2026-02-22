@@ -1,40 +1,49 @@
-// components/AudioToggle.tsx
-// Toggle for ambient background music
+// components/AudioToggle.tsx — Real ambient audio with localStorage preference (no autoplay)
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
+const STORAGE_KEY = 'cineverse_audio_preference';
+// Royalty-free ambient (Mixkit). Replace with /audio/ambient.mp3 for your own file.
+const AMBIENT_URL = 'https://assets.mixkit.co/music/preview/mixkit-space-ambient-578.mp3';
+
 export default function AudioToggle() {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [ready, setReady] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Note: In a real implementation, you would add an ambient audio file
-    // For now, this is a placeholder that demonstrates the functionality
-    audioRef.current = new Audio();
-    audioRef.current.loop = true;
-    audioRef.current.volume = 0.3;
-    
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem(STORAGE_KEY);
+    setReady(true);
+    const audio = new Audio(AMBIENT_URL);
+    audio.loop = true;
+    audio.volume = 0.25;
+    audioRef.current = audio;
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
+      audio.pause();
+      audio.src = '';
+      audioRef.current = null;
     };
   }, []);
 
   const toggleAudio = () => {
-    if (!audioRef.current) return;
-
+    const audio = audioRef.current;
+    if (!audio) return;
     if (isPlaying) {
-      audioRef.current.pause();
+      audio.pause();
+      localStorage.setItem(STORAGE_KEY, 'off');
+      setIsPlaying(false);
     } else {
-      audioRef.current.play().catch(error => {
-        console.log('Audio playback failed:', error);
-      });
+      const play = () => {
+        audio.play().then(() => {
+          setIsPlaying(true);
+          localStorage.setItem(STORAGE_KEY, 'on');
+        }).catch(() => {});
+      };
+      play();
     }
-    setIsPlaying(!isPlaying);
   };
 
   return (
@@ -44,8 +53,8 @@ export default function AudioToggle() {
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
       onClick={toggleAudio}
-      className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full glass-card flex items-center justify-center group"
-      title={isPlaying ? 'Mute Audio' : 'Play Audio'}
+      className="fixed bottom-6 left-6 z-50 w-14 h-14 rounded-full glass-card flex items-center justify-center group"
+      title={isPlaying ? 'Mute ambient' : 'Play ambient'}
     >
       {isPlaying ? (
         <svg

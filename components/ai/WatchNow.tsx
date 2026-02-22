@@ -53,7 +53,7 @@ export default function WatchNow() {
         <span className="text-3xl">⏱️</span>
         <div>
           <h3 className="font-display font-bold text-xl text-white">What to Watch Now</h3>
-          <p className="text-sm text-gray-400 font-body">Tell us your time & mood, we'll find the perfect match</p>
+          <p className="text-sm text-gray-400 font-body">Tell us your time &amp; mood, we&apos;ll find the perfect match</p>
         </div>
       </div>
 

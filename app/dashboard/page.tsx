@@ -2,7 +2,7 @@
 // Enhanced Dashboard with personalized welcome and mood-based UI glow
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SeriesCard from '@/components/SeriesCard';
 import { SeriesGridSkeleton } from '@/components/LoadingSkeleton';
@@ -11,6 +11,7 @@ import { useWatchlist } from '@/context/WatchlistContext';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getPosterUrl } from '@/lib/tmdb';
+import MagneticButton from '@/components/MagneticButton';
 
 type MoodType = 'exciting' | 'relaxing' | 'mysterious' | 'funny' | 'dramatic';
 
@@ -34,21 +35,7 @@ export default function DashboardPage() {
   const currentMood = moods.find(m => m.value === selectedMood)!;
   const watching = watchlist.filter(e => e.status === 'watching');
 
-  useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) setTimeOfDay('Morning');
-    else if (hour < 17) setTimeOfDay('Afternoon');
-    else if (hour < 21) setTimeOfDay('Evening');
-    else setTimeOfDay('Night');
-    
-    fetchDashboardData();
-  }, []);
-
-  useEffect(() => {
-    fetchMoodRecommendations();
-  }, [selectedMood]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
       const [trendRes, hiddenRes] = await Promise.all([
@@ -57,26 +44,42 @@ export default function DashboardPage() {
       ]);
       const trendData = await trendRes.json();
       const hiddenData = await hiddenRes.json();
-      
       if (trendData.success) setTrendingShows(trendData.data.slice(0, 5));
       if (hiddenData.success) {
-        // Filter hidden gems: high rating but lower popularity
         const gems = hiddenData.data
           .filter((s: Series) => s.vote_average > 7.5 && s.popularity < 50)
           .slice(0, 5);
         setHiddenGems(gems.length > 0 ? gems : hiddenData.data.slice(5, 10));
       }
-    } catch {}
-    setLoading(false);
-  };
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const fetchMoodRecommendations = async () => {
+  const fetchMoodRecommendations = useCallback(async () => {
     try {
       const res = await fetch(`/api/recommendations?type=mood&mood=${selectedMood}`);
       const data = await res.json();
       if (data.success) setMoodRecommendations(data.data);
-    } catch {}
-  };
+    } catch {
+      // ignore
+    }
+  }, [selectedMood]);
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) setTimeOfDay('Morning');
+    else if (hour < 17) setTimeOfDay('Afternoon');
+    else if (hour < 21) setTimeOfDay('Evening');
+    else setTimeOfDay('Night');
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  useEffect(() => {
+    fetchMoodRecommendations();
+  }, [fetchMoodRecommendations]);
 
   return (
     <div
@@ -111,16 +114,20 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="flex gap-3">
-              <Link href="/explore?mode=vibe">
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="neon-button neon-button-blue flex items-center gap-2">
-                  <span>🧠</span> AI Search
-                </motion.button>
-              </Link>
-              <Link href="/profile">
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="neon-button flex items-center gap-2">
-                  <span>★</span> Watchlist ({watchlist.length})
-                </motion.button>
-              </Link>
+              <MagneticButton className="inline-block">
+                <Link href="/explore?mode=vibe">
+                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="neon-button neon-button-blue flex items-center gap-2">
+                    <span>🧠</span> AI Search
+                  </motion.button>
+                </Link>
+              </MagneticButton>
+              <MagneticButton className="inline-block">
+                <Link href="/profile">
+                  <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="neon-button flex items-center gap-2">
+                    <span>★</span> Watchlist ({watchlist.length})
+                  </motion.button>
+                </Link>
+              </MagneticButton>
             </div>
           </div>
         </motion.div>

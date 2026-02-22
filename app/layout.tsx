@@ -8,6 +8,7 @@ import AudioToggle from '@/components/AudioToggle';
 import Footer from '@/components/Footer';
 import AICopilot from '@/components/ai/AICopilot';
 import CursorGlow from '@/components/CursorGlow';
+import { AuthProvider } from '@/context/AuthContext';
 import { WatchlistProvider } from '@/context/WatchlistContext';
 
 export const metadata: Metadata = {
@@ -31,6 +32,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body>
+        <AuthProvider>
         <WatchlistProvider>
           {/* Background particles */}
           <ParticlesBackground />
@@ -53,6 +55,7 @@ export default function RootLayout({
           <AudioToggle />
           <Footer />
         </WatchlistProvider>
+        </AuthProvider>
       </body>
     </html>
   );

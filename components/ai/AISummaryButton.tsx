@@ -35,10 +35,11 @@ export default function AISummaryButton({ seriesName, overview, genres, rating, 
         body: JSON.stringify({ seriesName, overview, genres, rating, year }),
       });
       const data = await res.json();
-      if (data.success) {
+      if (data.success && typeof data.summary === 'string') {
         setSummary(data.summary);
+        setError('');
       } else {
-        setError('Unable to generate summary');
+        setError(data.summary || 'Unable to generate summary');
       }
     } catch {
       setError('Network error');

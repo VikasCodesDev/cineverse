@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { Series } from '@/lib/tmdb';
 import { getPosterUrl } from '@/lib/tmdb';
 import WatchlistButton from '@/components/ai/WatchlistButton';
+import MagneticButton from '@/components/MagneticButton';
 
 interface SeriesCardProps {
   series: Series;
@@ -16,6 +17,7 @@ interface SeriesCardProps {
 
 export default function SeriesCard({ series, index = 0 }: SeriesCardProps) {
   return (
+    <MagneticButton className="relative block">
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -86,5 +88,6 @@ export default function SeriesCard({ series, index = 0 }: SeriesCardProps) {
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-2xl"
         style={{ boxShadow: '0 0 30px rgba(255, 0, 85, 0.3), 0 0 60px rgba(0, 217, 255, 0.1)' }} />
     </motion.div>
+    </MagneticButton>
   );
 }

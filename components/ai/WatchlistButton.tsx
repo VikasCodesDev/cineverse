@@ -26,20 +26,30 @@ export default function WatchlistButton({ seriesId, seriesName, posterPath, comp
   const { addToWatchlist, removeFromWatchlist, getEntry, isInWatchlist } = useWatchlist();
   const [showMenu, setShowMenu] = useState(false);
   const [showSuccess, setShowSuccess] = useState('');
+  const [showError, setShowError] = useState('');
 
   const entry = getEntry(seriesId);
   const inList = isInWatchlist(seriesId);
 
-  const handleStatus = (status: WatchlistStatus) => {
-    addToWatchlist({ seriesId, seriesName, posterPath, status });
+  const handleStatus = async (status: WatchlistStatus) => {
+    const ok = await addToWatchlist({ seriesId, seriesName, posterPath, status });
     setShowMenu(false);
-    setShowSuccess(STATUS_CONFIG[status].label);
-    setTimeout(() => setShowSuccess(''), 2000);
+    if (ok) {
+      setShowSuccess(STATUS_CONFIG[status].label);
+      setTimeout(() => setShowSuccess(''), 2000);
+    } else {
+      setShowError('Log in to save watchlist');
+      setTimeout(() => setShowError(''), 3000);
+    }
   };
 
-  const handleRemove = () => {
-    removeFromWatchlist(seriesId);
+  const handleRemove = async () => {
+    const ok = await removeFromWatchlist(seriesId);
     setShowMenu(false);
+    if (!ok) {
+      setShowError('Log in to manage watchlist');
+      setTimeout(() => setShowError(''), 3000);
+    }
   };
 
   if (compact) {
@@ -103,9 +113,19 @@ export default function WatchlistButton({ seriesId, seriesName, posterPath, comp
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute -top-10 left-1/2 -translate-x-1/2 bg-neon-red/90 text-white text-xs px-3 py-1 rounded-full font-display whitespace-nowrap"
+            className="absolute -top-10 left-1/2 -translate-x-1/2 bg-neon-red/90 text-white text-xs px-3 py-1 rounded-full font-display whitespace-nowrap z-50"
           >
             Added to {showSuccess}!
+          </motion.div>
+        )}
+        {showError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute -top-10 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs px-3 py-1 rounded-full font-display whitespace-nowrap z-50"
+          >
+            {showError}
           </motion.div>
         )}
       </AnimatePresence>

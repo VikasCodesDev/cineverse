@@ -1,14 +1,16 @@
 // app/profile/page.tsx
-// User profile page with smart watchlist management
+// User profile: username, avatar, watchlist, recently watched
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useAuth } from '@/context/AuthContext';
 import { useWatchlist } from '@/context/WatchlistContext';
 import { WatchlistStatus, WatchlistEntry } from '@/types';
 import { getPosterUrl } from '@/lib/tmdb';
+import { Series } from '@/lib/tmdb';
 
 const STATUS_CONFIG: Record<WatchlistStatus, { label: string; emoji: string; color: string; bgColor: string }> = {
   watching: { label: 'Watching', emoji: '▶️', color: '#22c55e', bgColor: 'rgba(34, 197, 94, 0.1)' },
@@ -21,10 +23,32 @@ const STATUS_CONFIG: Record<WatchlistStatus, { label: string; emoji: string; col
 const ALL_STATUSES: WatchlistStatus[] = ['watching', 'completed', 'plan_to_watch', 'dropped', 'rewatch'];
 
 export default function ProfilePage() {
+  const { user } = useAuth();
   const { watchlist, updateStatus, removeFromWatchlist } = useWatchlist();
   const [activeFilter, setActiveFilter] = useState<WatchlistStatus | 'all'>('all');
   const [editingEntry, setEditingEntry] = useState<number | null>(null);
   const [editProgress, setEditProgress] = useState(0);
+  const [recentIds, setRecentIds] = useState<number[]>([]);
+  const [recentSeries, setRecentSeries] = useState<Series[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await fetch('/api/user/recent', { credentials: 'include' });
+      const data = await res.json();
+      if (cancelled || !data.success || !Array.isArray(data.data)) return;
+      setRecentIds(data.data);
+      if (data.data.length === 0) return;
+      const first = data.data.slice(0, 10);
+      const results = await Promise.all(
+        first.map((id: number) =>
+          fetch(`https://api.themoviedb.org/3/tv/${id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`).then(r => r.json()).catch(() => null)
+        )
+      );
+      if (!cancelled) setRecentSeries(results.filter(Boolean));
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const filtered = activeFilter === 'all' 
     ? watchlist 
@@ -57,8 +81,8 @@ export default function ProfilePage() {
             </div>
 
             <div className="text-center md:text-left flex-1">
-              <h1 className="text-3xl font-display font-black text-white">CineVerse User</h1>
-              <p className="text-gray-400 font-body mt-1">AI-powered series explorer</p>
+              <h1 className="text-3xl font-display font-black text-white">{user?.name || 'CineVerse User'}</h1>
+              <p className="text-gray-400 font-body mt-1">{user?.email || 'AI-powered series explorer'}</p>
               
               {/* Quick Stats */}
               <div className="flex flex-wrap gap-6 mt-4 justify-center md:justify-start">
@@ -92,6 +116,34 @@ export default function ProfilePage() {
             </Link>
           </div>
         </motion.div>
+
+        {/* Recently Watched */}
+        {recentSeries.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="space-y-4"
+          >
+            <h2 className="text-2xl font-display font-bold text-neon-blue">Recently Watched</h2>
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
+              {recentSeries.map((s) => (
+                <Link key={s.id} href={`/series/${s.id}`}>
+                  <div className="flex-shrink-0 w-32 glass-card overflow-hidden hover:border-neon-blue/50 transition-all cursor-pointer group">
+                    <div className="relative aspect-[2/3]">
+                      {s.poster_path ? (
+                        <Image src={getPosterUrl(s.poster_path, 'w185')} alt={s.name} fill className="object-cover group-hover:scale-105 transition-transform" />
+                      ) : (
+                        <div className="w-full h-full bg-neon-blue/20 flex items-center justify-center font-display text-neon-blue text-sm">CV</div>
+                      )}
+                    </div>
+                    <p className="p-2 text-xs font-display font-bold text-white line-clamp-2">{s.name}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Status Filter Tabs */}
         <motion.div

@@ -1,16 +1,18 @@
-// components/Navigation.tsx  
-// Main navigation component with glassmorphism design + watchlist badge
+// components/Navigation.tsx — Main nav with auth (Login/Signup vs Profile/Logout)
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { useWatchlist } from '@/context/WatchlistContext';
+import MagneticButton from '@/components/MagneticButton';
 
 export default function Navigation() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
   const { watchlist } = useWatchlist();
 
   const navItems = [
@@ -44,26 +46,65 @@ export default function Navigation() {
           </Link>
 
           <div className="hidden md:flex items-center space-x-1">
-            {navItems.map((item) => (
-              <Link key={item.path} href={item.path}>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`relative px-4 py-2 rounded-lg font-display font-semibold uppercase text-sm tracking-wider transition-all ${
-                    pathname === item.path
-                      ? 'text-neon-red border-2 border-neon-red bg-neon-red/10'
-                      : 'text-gray-300 hover:text-neon-blue hover:border-2 hover:border-neon-blue/50'
-                  }`}
-                >
-                  {item.name}
-                  {item.path === '/profile' && watchlist.length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-neon-red rounded-full text-white text-xs flex items-center justify-center font-display">
-                      {watchlist.length > 9 ? '9+' : watchlist.length}
-                    </span>
-                  )}
-                </motion.div>
-              </Link>
-            ))}
+            {user ? (
+              <>
+                {navItems.map((item) => (
+                  <MagneticButton key={item.path} className="inline-block">
+                    <Link href={item.path}>
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`relative px-4 py-2 rounded-lg font-display font-semibold uppercase text-sm tracking-wider transition-all ${
+                          pathname === item.path
+                            ? 'text-neon-red border-2 border-neon-red bg-neon-red/10'
+                            : 'text-gray-300 hover:text-neon-blue hover:border-2 hover:border-neon-blue/50'
+                        }`}
+                      >
+                        {item.name}
+                        {item.path === '/profile' && watchlist.length > 0 && (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-neon-red rounded-full text-white text-xs flex items-center justify-center font-display">
+                            {watchlist.length > 9 ? '9+' : watchlist.length}
+                          </span>
+                        )}
+                      </motion.div>
+                    </Link>
+                  </MagneticButton>
+                ))}
+                <MagneticButton className="inline-block">
+                  <button
+                    type="button"
+                    onClick={() => logout()}
+                    className="px-4 py-2 rounded-lg font-display font-semibold uppercase text-sm tracking-wider text-gray-400 hover:text-neon-red hover:border-2 hover:border-neon-red/50 border-2 border-transparent transition-all"
+                  >
+                    Logout
+                  </button>
+                </MagneticButton>
+              </>
+            ) : (
+              <>
+                <MagneticButton className="inline-block">
+                  <Link href="/">
+                    <motion.span whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className={`inline-block px-4 py-2 rounded-lg font-display font-semibold uppercase text-sm transition-all ${pathname === '/' ? 'text-neon-red border-2 border-neon-red bg-neon-red/10' : 'text-gray-300 hover:text-neon-blue hover:border-2 hover:border-neon-blue/50'}`}>
+                      Home
+                    </motion.span>
+                  </Link>
+                </MagneticButton>
+                <MagneticButton className="inline-block">
+                  <Link href="/login">
+                    <motion.span whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="inline-block px-4 py-2 rounded-lg font-display font-semibold uppercase text-sm text-neon-blue border-2 border-neon-blue/50 hover:bg-neon-blue/10 transition-all">
+                      Login
+                    </motion.span>
+                  </Link>
+                </MagneticButton>
+                <MagneticButton className="inline-block">
+                  <Link href="/signup">
+                    <motion.span whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="inline-block px-4 py-2 rounded-lg font-display font-semibold uppercase text-sm neon-button">
+                      Sign Up
+                    </motion.span>
+                  </Link>
+                </MagneticButton>
+              </>
+            )}
           </div>
 
           <motion.button
@@ -85,26 +126,44 @@ export default function Navigation() {
               exit={{ opacity: 0, height: 0 }}
               className="md:hidden py-4 space-y-2 overflow-hidden"
             >
-              {navItems.map((item) => (
-                <Link key={item.path} href={item.path}>
-                  <motion.div
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`flex items-center justify-between px-4 py-3 rounded-lg font-display font-semibold uppercase text-sm tracking-wider transition-all ${
-                      pathname === item.path
-                        ? 'text-neon-red border-2 border-neon-red bg-neon-red/10'
-                        : 'text-gray-300 hover:text-neon-blue hover:bg-neon-blue/10'
-                    }`}
+              {user ? (
+                <>
+                  {navItems.map((item) => (
+                    <Link key={item.path} href={item.path} onClick={() => setIsMenuOpen(false)}>
+                      <div
+                        className={`flex items-center justify-between px-4 py-3 rounded-lg font-display font-semibold uppercase text-sm tracking-wider transition-all ${
+                          pathname === item.path
+                            ? 'text-neon-red border-2 border-neon-red bg-neon-red/10'
+                            : 'text-gray-300 hover:text-neon-blue hover:bg-neon-blue/10'
+                        }`}
+                      >
+                        {item.name}
+                        {item.path === '/profile' && watchlist.length > 0 && (
+                          <span className="text-xs bg-neon-red/20 border border-neon-red/50 rounded-full px-2 py-0.5 text-neon-red">
+                            {watchlist.length}
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => { setIsMenuOpen(false); logout(); }}
+                    className="w-full text-left px-4 py-3 rounded-lg font-display font-semibold uppercase text-sm text-gray-400 hover:text-neon-red"
                   >
-                    {item.name}
-                    {item.path === '/profile' && watchlist.length > 0 && (
-                      <span className="text-xs bg-neon-red/20 border border-neon-red/50 rounded-full px-2 py-0.5 text-neon-red">
-                        {watchlist.length}
-                      </span>
-                    )}
-                  </motion.div>
-                </Link>
-              ))}
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+                    <div className="px-4 py-3 rounded-lg font-display font-semibold text-neon-blue">Login</div>
+                  </Link>
+                  <Link href="/signup" onClick={() => setIsMenuOpen(false)}>
+                    <div className="px-4 py-3 rounded-lg font-display font-semibold text-neon-red">Sign Up</div>
+                  </Link>
+                </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

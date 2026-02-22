@@ -74,8 +74,9 @@ async function searchTMDB(query: string, genreIds?: number[]): Promise<any[]> {
 }
 
 async function getTMDBGenres(): Promise<Record<string, number>> {
-  const res = await fetch(`${TMDB_BASE}/genre/tv/list?api_key=${TMDB_API_KEY}`);
-  const data = await res.json();
+  const apiKey = TMDB_API_KEY || '';
+  const res = await fetch(`${TMDB_BASE}/genre/tv/list?api_key=${apiKey}`);
+  const data = await res.json().catch(() => ({ genres: [] }));
   const map: Record<string, number> = {};
   for (const g of (data.genres || [])) {
     map[g.name.toLowerCase()] = g.id;
@@ -83,16 +84,44 @@ async function getTMDBGenres(): Promise<Record<string, number>> {
   return map;
 }
 
+// Hybrid: extract search term and genre hints from natural language when Groq is unavailable
+function hybridParseQuery(query: string): { searchTerms: string[]; genreNames: string[]; explanation: string } {
+  const q = (query || 'popular shows').toLowerCase();
+  const genreKeywords: Record<string, string[]> = {
+    comedy: ['comedy', 'funny', 'light', 'humor', 'sitcom'],
+    drama: ['drama', 'emotional', 'serious', 'tear'],
+    thriller: ['thriller', 'suspense', 'tense', 'dark'],
+    'sci-fi': ['sci-fi', 'scifi', 'science fiction', 'space', 'future', 'stranger things'],
+    mystery: ['mystery', 'whodunit', 'detective'],
+    action: ['action', 'adventure', 'exciting', 'fight'],
+    horror: ['horror', 'scary', 'creepy'],
+  };
+  const genreNames: string[] = [];
+  for (const [genre, keywords] of Object.entries(genreKeywords)) {
+    if (keywords.some(kw => q.includes(kw))) genreNames.push(genre);
+  }
+  const searchTerms: string[] = [];
+  const likeMatch = q.match(/like\s+([^.?!]+?)(?:\s+but|$|\.)/);
+  if (likeMatch) searchTerms.push(likeMatch[1].trim());
+  const words = q.replace(/\b(like|but|for|the|and|or|something|show|shows|watch|want)\b/gi, '').trim().split(/\s+/).filter(w => w.length > 2);
+  if (words.length) searchTerms.push(words.slice(0, 3).join(' '));
+  if (!searchTerms.length) searchTerms.push('popular');
+  const explanation = `Showing ${genreNames.length ? genreNames.join(', ') : 'popular'} shows${searchTerms[0] !== 'popular' ? ` similar to "${searchTerms[0]}"` : ''}.`;
+  return { searchTerms, genreNames: genreNames.length ? genreNames : ['drama'], explanation };
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { query, mood, history } = await request.json();
+    const body = await request.json().catch(() => ({}));
+    const query = typeof body.query === 'string' ? body.query : '';
+    const mood = body.mood;
+    const history = body.history;
 
-    if (!GROQ_API_KEY) {
-      return NextResponse.json({ success: false, error: 'Groq API key not configured' }, { status: 500 });
-    }
+    let parsed: { genres?: string[]; searchTerms?: string[]; explanation?: string } = {};
 
-    // Step 1: Use Groq to parse the query into structured data
-    const parsePrompt: GroqMessage[] = [
+    if (GROQ_API_KEY) {
+      // Step 1: Use Groq to parse the query into structured data
+      const parsePrompt: GroqMessage[] = [
       {
         role: 'system',
         content: `You are a TV show recommendation AI. Parse the user's query and extract:
@@ -111,35 +140,60 @@ ${history?.length ? `User has watched: ${history.join(', ')}` : ''}`
       }
     ];
 
-    let parsed: any = {};
-    try {
-      const parseResponse = await callGroq(parsePrompt, 300);
-      parsed = JSON.parse(parseResponse.replace(/```json|```/g, '').trim());
-    } catch {
+      try {
+        const parseResponse = await callGroq(parsePrompt, 300);
+        parsed = JSON.parse(parseResponse.replace(/```json|```/g, '').trim());
+      } catch {
+        parsed = {
+          genres: ['drama', 'thriller'],
+          searchTerms: [query || 'popular drama'],
+          explanation: 'Finding great shows for you',
+        };
+      }
+    } else {
+      const hybrid = hybridParseQuery(query || mood || '');
       parsed = {
-        genres: ['drama', 'thriller'],
-        themes: ['engaging'],
-        tone: 'dramatic',
-        searchTerms: [query || 'popular drama'],
-        explanation: 'Finding great shows for you'
+        genres: hybrid.genreNames,
+        searchTerms: hybrid.searchTerms,
+        explanation: hybrid.explanation,
       };
     }
 
     // Step 2: Get TMDB genre IDs
     const genreMap = await getTMDBGenres();
     const genreIds = (parsed.genres || [])
-      .map((g: string) => genreMap[g.toLowerCase()])
+      .map((g: string) => genreMap[(g as string).toLowerCase()])
       .filter(Boolean);
 
     // Step 3: Fetch series from TMDB
     const searchTerm = (parsed.searchTerms || [query || 'popular'])[0];
     const tmdbResults = await searchTMDB(searchTerm, genreIds);
 
-    // Step 4: Use Groq to rank and explain results
     if (tmdbResults.length === 0) {
-      return NextResponse.json({ success: true, data: [], explanation: parsed.explanation });
+      return NextResponse.json({
+        success: true,
+        data: [],
+        queryExplanation: parsed.explanation || 'No matches found.',
+        parsedIntent: parsed,
+      });
     }
 
+    if (!GROQ_API_KEY) {
+      const enriched = tmdbResults.slice(0, 8).map((s: { id: number; name?: string; overview?: string; vote_average?: number }, i: number) => ({
+        ...s,
+        aiExplanation: `Highly rated ${parsed.genres?.[0] || 'series'} with strong reviews. Great match for your vibe.`,
+        matchScore: 90 - i * 5,
+        matchReasons: ['Genre match', 'High rating'],
+      }));
+      return NextResponse.json({
+        success: true,
+        data: enriched,
+        queryExplanation: parsed.explanation || `Found shows matching: ${query || mood}`,
+        parsedIntent: parsed,
+      });
+    }
+
+    // Step 4: Use Groq to rank and explain results
     const rankPrompt: GroqMessage[] = [
       {
         role: 'system',
@@ -197,7 +251,7 @@ Select best 8 matches with explanations.`
   } catch (error) {
     console.error('AI recommend error:', error);
     return NextResponse.json(
-      { success: false, error: 'AI recommendation failed' },
+      { success: false, error: 'AI recommendation failed', data: [] },
       { status: 500 }
     );
   }

@@ -2,12 +2,13 @@
 // Explore page with AI Vibe Search, filters, and recommendations
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SeriesCard from '@/components/SeriesCard';
 import { SeriesGridSkeleton } from '@/components/LoadingSkeleton';
 import VibeSearch from '@/components/ai/VibeSearch';
 import WatchNow from '@/components/ai/WatchNow';
+import MagneticButton from '@/components/MagneticButton';
 import { Series, Genre } from '@/lib/tmdb';
 
 type SearchMode = 'browse' | 'vibe' | 'watch-now';
@@ -21,18 +22,17 @@ export default function ExplorePage() {
   const [filterType, setFilterType] = useState<'popular' | 'top_rated'>('popular');
   const [searchMode, setSearchMode] = useState<SearchMode>('browse');
 
-  useEffect(() => { fetchGenres(); }, []);
-  useEffect(() => { if (searchMode === 'browse') fetchSeries(); }, [selectedGenre, filterType, searchQuery, searchMode]);
-
-  const fetchGenres = async () => {
+  const fetchGenres = useCallback(async () => {
     try {
       const res = await fetch('/api/genres');
       const data = await res.json();
       if (data.success) setGenres(data.data);
-    } catch {}
-  };
+    } catch {
+      // ignore
+    }
+  }, []);
 
-  const fetchSeries = async () => {
+  const fetchSeries = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -45,9 +45,20 @@ export default function ExplorePage() {
       const res = await fetch(`/api/series?${params}`);
       const data = await res.json();
       if (data.success) setSeries(data.data);
-    } catch {}
-    setLoading(false);
-  };
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, selectedGenre, filterType]);
+
+  useEffect(() => {
+    fetchGenres();
+  }, [fetchGenres]);
+
+  useEffect(() => {
+    if (searchMode === 'browse') fetchSeries();
+  }, [searchMode, fetchSeries]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,23 +97,24 @@ export default function ExplorePage() {
           className="flex flex-wrap gap-3 justify-center"
         >
           {(Object.entries(MODE_CONFIG) as [SearchMode, typeof MODE_CONFIG[SearchMode]][]).map(([mode, config]) => (
-            <motion.button
-              key={mode}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setSearchMode(mode)}
-              className={`px-6 py-3 rounded-xl font-display font-bold transition-all flex items-center gap-2 border-2 ${
-                searchMode === mode
-                  ? 'border-neon-red bg-neon-red/20 text-neon-red'
-                  : 'border-gray-700 text-gray-400 hover:border-neon-red/50 hover:text-gray-200'
-              }`}
-            >
-              <span className="text-lg">{config.emoji}</span>
-              <div className="text-left">
-                <div className="text-sm">{config.label}</div>
-                <div className="text-xs opacity-60 font-body font-normal hidden sm:block">{config.desc}</div>
-              </div>
-            </motion.button>
+            <MagneticButton key={mode} className="inline-block">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSearchMode(mode)}
+                className={`px-6 py-3 rounded-xl font-display font-bold transition-all flex items-center gap-2 border-2 ${
+                  searchMode === mode
+                    ? 'border-neon-red bg-neon-red/20 text-neon-red'
+                    : 'border-gray-700 text-gray-400 hover:border-neon-red/50 hover:text-gray-200'
+                }`}
+              >
+                <span className="text-lg">{config.emoji}</span>
+                <div className="text-left">
+                  <div className="text-sm">{config.label}</div>
+                  <div className="text-xs opacity-60 font-body font-normal hidden sm:block">{config.desc}</div>
+                </div>
+              </motion.button>
+            </MagneticButton>
           ))}
         </motion.div>
 
