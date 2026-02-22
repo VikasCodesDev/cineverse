@@ -1,6 +1,8 @@
 // app/api/series/route.ts
 // API endpoint for fetching series with caching
 import { NextRequest, NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
 import {
   fetchPopularSeries,
   fetchTopRatedSeries,

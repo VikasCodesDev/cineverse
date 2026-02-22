@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
+import MagneticButton from '@/components/MagneticButton';
 
 // Dynamically import Portal3D to avoid SSR issues with Three.js
 const Portal3D = dynamic(() => import('@/components/Portal3D'), {
@@ -101,25 +102,28 @@ export default function HomePage() {
                 transition={{ delay: 0.6 }}
                 className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
               >
-                <Link href="/explore">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="neon-button w-full sm:w-auto"
-                  >
-                    <span className="relative z-10">Discover Your Series</span>
-                  </motion.button>
-                </Link>
-
-                <Link href="/dashboard">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="neon-button neon-button-blue w-full sm:w-auto"
-                  >
-                    <span className="relative z-10">View Dashboard</span>
-                  </motion.button>
-                </Link>
+                <MagneticButton className="w-full sm:w-auto">
+                  <Link href="/explore">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="neon-button w-full sm:w-auto"
+                    >
+                      <span className="relative z-10">Discover Your Series</span>
+                    </motion.button>
+                  </Link>
+                </MagneticButton>
+                <MagneticButton className="w-full sm:w-auto">
+                  <Link href="/dashboard">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="neon-button neon-button-blue w-full sm:w-auto"
+                    >
+                      <span className="relative z-10">View Dashboard</span>
+                    </motion.button>
+                  </Link>
+                </MagneticButton>
               </motion.div>
 
               {/* Stats */}

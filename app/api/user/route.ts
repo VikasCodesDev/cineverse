@@ -2,7 +2,9 @@
 // API endpoint for managing user data (saved series and watch history)
 import { NextRequest, NextResponse } from 'next/server';
 import { getCollection } from '@/lib/mongodb';
-import { ObjectId } from "mongodb";
+import { ObjectId } from 'mongodb';
+
+export const dynamic = 'force-dynamic';
 
 
 // For demo purposes, using a fixed user ID
@@ -19,22 +21,21 @@ export async function GET(request: NextRequest) {
     let user = await usersCollection.findOne({ userId: DEMO_USER_ID });
 
     if (!user) {
-  // Create default user if not exists
-  user = {
-    _id: new ObjectId(),
-    userId: DEMO_USER_ID,
-    savedSeries: [],
-    watchHistory: [],
-    createdAt: new Date(),
-  };
+      user = {
+        _id: new ObjectId(),
+        userId: DEMO_USER_ID,
+        savedSeries: [] as number[],
+        watchHistory: [] as number[],
+        createdAt: new Date(),
+      };
+      await usersCollection.insertOne(user);
+    }
 
-  await usersCollection.insertOne(user);
-}
-
-
+    const saved = user.savedSeries ?? [];
+    const history = user.watchHistory ?? [];
     return NextResponse.json({
       success: true,
-      data: type === 'saved' ? user.savedSeries : user.watchHistory,
+      data: type === 'saved' ? saved : history,
     });
   } catch (error) {
     console.error('Error in user GET API:', error);

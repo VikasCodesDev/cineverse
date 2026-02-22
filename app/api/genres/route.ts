@@ -1,6 +1,8 @@
 // app/api/genres/route.ts
 // API endpoint for fetching all genres
 import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
 import { fetchGenres } from '@/lib/tmdb';
 
 export async function GET() {

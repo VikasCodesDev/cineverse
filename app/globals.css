@@ -284,3 +284,175 @@ button:focus,
 a:focus {
   outline-offset: 4px;
 }
+
+/* ===== CineVerse AI UPGRADE ADDITIONS ===== */
+
+/* Magnetic button hover effect */
+.neon-button {
+  position: relative;
+  transition: all 0.3s ease, box-shadow 0.3s ease, transform 0.1s ease;
+}
+
+/* Neon text pulse animation */
+@keyframes neonPulse {
+  0%, 100% {
+    text-shadow:
+      0 0 10px currentColor,
+      0 0 20px currentColor,
+      0 0 40px currentColor;
+  }
+  50% {
+    text-shadow:
+      0 0 5px currentColor,
+      0 0 10px currentColor,
+      0 0 20px currentColor;
+  }
+}
+
+/* Depth parallax effect layer */
+.parallax-layer {
+  will-change: transform;
+  transition: transform 0.1s linear;
+}
+
+/* Premium loading state */
+.loading-premium {
+  position: relative;
+  overflow: hidden;
+}
+
+.loading-premium::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 0, 85, 0.1) 50%,
+    transparent 60%
+  );
+  background-size: 200% 200%;
+  animation: shimmerPremium 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmerPremium {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Smooth page transitions */
+.page-enter {
+  animation: pageEnter 0.4s ease-out;
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Glow intensity for mood states */
+.mood-glow-exciting {
+  box-shadow: 0 0 30px rgba(255, 0, 85, 0.4), 0 0 60px rgba(255, 0, 85, 0.2);
+}
+
+.mood-glow-relaxing {
+  box-shadow: 0 0 30px rgba(0, 217, 255, 0.4), 0 0 60px rgba(0, 217, 255, 0.2);
+}
+
+.mood-glow-mysterious {
+  box-shadow: 0 0 30px rgba(139, 0, 255, 0.4), 0 0 60px rgba(139, 0, 255, 0.2);
+}
+
+.mood-glow-funny {
+  box-shadow: 0 0 30px rgba(251, 191, 36, 0.4), 0 0 60px rgba(251, 191, 36, 0.2);
+}
+
+.mood-glow-dramatic {
+  box-shadow: 0 0 30px rgba(255, 0, 110, 0.4), 0 0 60px rgba(255, 0, 110, 0.2);
+}
+
+/* Scrollbar thin for copilot */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 0, 85, 0.3);
+  border-radius: 2px;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Depth card effect on hover */
+.glass-card {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+/* AI badge glow */
+.ai-badge {
+  background: linear-gradient(90deg, rgba(0, 217, 255, 0.1), rgba(139, 0, 255, 0.1));
+  border: 1px solid rgba(0, 217, 255, 0.3);
+  animation: aiBadgePulse 3s ease-in-out infinite;
+}
+
+@keyframes aiBadgePulse {
+  0%, 100% { border-color: rgba(0, 217, 255, 0.3); }
+  50% { border-color: rgba(139, 0, 255, 0.5); }
+}
+
+/* Range input styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-neon-red);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(255, 0, 85, 0.5);
+}
+
+/* Micro-interaction: subtle scale on all interactive elements */
+button, a {
+  transition: transform 0.1s ease, opacity 0.2s ease;
+}
+
+/* Neon border animation */
+@keyframes neonBorderRotate {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.neon-border-animated {
+  background: linear-gradient(90deg, var(--color-neon-red), var(--color-neon-blue), var(--color-neon-pink), var(--color-neon-red));
+  background-size: 300% 300%;
+  animation: neonBorderRotate 4s ease infinite;
+}

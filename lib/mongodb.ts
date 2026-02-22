@@ -1,45 +1,42 @@
 // lib/mongodb.ts
-// MongoDB connection utility with connection pooling
-import { MongoClient } from 'mongodb';
+// MongoDB connection utility with connection pooling (serverless-safe)
+import { MongoClient, MongoClientOptions } from 'mongodb';
 
-if (!process.env.MONGODB_URI) {
-  throw new Error('Please add your MongoDB URI to .env.local');
+const uri = process.env.MONGODB_URI;
+const options: MongoClientOptions = {};
+
+declare global {
+  // eslint-disable-next-line no-var
+  var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-const uri: string = process.env.MONGODB_URI;
-const options = {};
+let clientPromise: Promise<MongoClient> | null = null;
 
-let client: MongoClient;
-let clientPromise: Promise<MongoClient>;
-
-if (process.env.NODE_ENV === 'development') {
-  // In development mode, use a global variable to preserve the value
-  // across module reloads caused by HMR (Hot Module Replacement)
-  let globalWithMongo = global as typeof globalThis & {
-    _mongoClientPromise?: Promise<MongoClient>;
-  };
-
-  if (!globalWithMongo._mongoClientPromise) {
-    client = new MongoClient(uri, options);
-    globalWithMongo._mongoClientPromise = client.connect();
+function getClientPromise(): Promise<MongoClient> {
+  if (!uri) {
+    throw new Error('Please add MONGODB_URI to your environment variables (.env.local or deployment config).');
   }
-  clientPromise = globalWithMongo._mongoClientPromise;
-} else {
-  // In production mode, create a new client
-  client = new MongoClient(uri, options);
+  // In serverless (Vercel, Render), reuse connection via global to avoid multiple connections per cold start
+  if (global._mongoClientPromise) {
+    return global._mongoClientPromise;
+  }
+  if (clientPromise) {
+    return clientPromise;
+  }
+  const client = new MongoClient(uri, options);
   clientPromise = client.connect();
+  global._mongoClientPromise = clientPromise;
+  return clientPromise;
 }
 
-// Export a module-scoped MongoClient promise
-export default clientPromise;
+// Lazy promise: only created when first used (avoids build-time connection)
+export default getClientPromise;
 
-// Helper function to get database
 export async function getDatabase() {
-  const client = await clientPromise;
+  const client = await getClientPromise();
   return client.db('cineverse');
 }
 
-// Helper function to get specific collection
 export async function getCollection(collectionName: string) {
   const db = await getDatabase();
   return db.collection(collectionName);

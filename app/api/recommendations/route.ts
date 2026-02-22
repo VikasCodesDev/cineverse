@@ -1,6 +1,8 @@
 // app/api/recommendations/route.ts
 // API endpoint for AI-powered recommendations
 import { NextRequest, NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
 import { getCollection } from '@/lib/mongodb';
 import {
   getRecommendationEngine,

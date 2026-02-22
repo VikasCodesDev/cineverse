@@ -1,7 +1,6 @@
 // models/recommendation.ts
-// AI-powered recommendation engine using TensorFlow.js
-// Implements content-based filtering with cosine similarity
-import * as tf from '@tensorflow/tfjs';
+// AI-powered recommendation engine (content-based filtering with cosine similarity)
+// Pure JS implementation for serverless compatibility — no TensorFlow dependency
 
 export interface SeriesFeatures {
   id: number;

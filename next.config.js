@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['image.tmdb.org'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -11,9 +10,9 @@ const nextConfig = {
       },
     ],
   },
-  webpack: (config) => {
-    config.externals = [...(config.externals || []), { canvas: 'canvas' }];
-    return config;
+  // Ensure API routes and pages that need request context are dynamic at build
+  experimental: {
+    serverComponentsExternalPackages: ['mongodb'],
   },
 }
 
