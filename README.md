@@ -12,7 +12,7 @@
 
 An AI-powered web series recommendation platform with a stunning 80s retro sci-fi neon aesthetic inspired by Stranger Things. CineVerse creates a personalized entertainment universe where AI understands your mood, taste, and viewing behavior to deliver highly relevant recommendations. Built with Next.js 14, TypeScript, TensorFlow.js, and MongoDB.
 
-🌐 Live Website: https://cineverseai.vercel.app/
+🌐 Live Website: https://cineverse-vm.vercel.app/
 
 ## ✨ Features
 
