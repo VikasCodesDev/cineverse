@@ -105,7 +105,7 @@ export default function AICopilot() {
     <>
       {/* Floating Button */}
       <motion.div
-        className="fixed bottom-24 right-6 z-50"
+        className="fixed bottom-28 right-6 z-50"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 2, type: 'spring', stiffness: 300 }}
@@ -153,7 +153,7 @@ export default function AICopilot() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed bottom-44 right-6 z-50 w-80 sm:w-96 h-[480px] flex flex-col glass-card overflow-hidden"
+            className="fixed bottom-48 right-6 z-50 w-80 sm:w-96 h-[480px] flex flex-col glass-card overflow-hidden"
             style={{ border: '1px solid rgba(255, 0, 85, 0.4)' }}
           >
             {/* Header */}

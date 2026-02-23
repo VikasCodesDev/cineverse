@@ -12,7 +12,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { WatchlistProvider } from '@/context/WatchlistContext';
 
 export const metadata: Metadata = {
-  title: 'CineVerse — AI-Powered Series Discovery',
+  title: 'CineVerse',
   description: 'Discover your next binge-worthy series with advanced AI recommendations in a retro sci-fi universe.',
   keywords: ['web series', 'TV shows', 'recommendations', 'AI', 'streaming', 'TMDB'],
   icons: {
