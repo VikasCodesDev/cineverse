@@ -9,7 +9,7 @@ import { FaInstagram, FaXTwitter, FaLinkedin, FaGithub } from 'react-icons/fa6';
 const socialLinks = [
   {
     icon: FaInstagram,
-    href: 'https://www.instagram.com/vikas01/?hl=en#',
+    href: 'https://www.instagram.com/vikas01_____?igsh=MW1xNTI2bDBndHBtNQ==',
     label: 'Instagram',
     hoverColor: 'hover:text-pink-400 hover:border-pink-400/50 hover:shadow-[0_0_12px_rgba(244,114,182,0.4)]',
   },
